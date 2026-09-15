@@ -1,429 +1,85 @@
-<div align="center">
+# Collaborative Real-Time Drawing System — Quilt Edition
 
-# 🎨 Collaborative Real-Time Drawing System
+A Java/JavaFX/TCP multi-user drawing app (upstream by mominyar) elevated
+with a Quilt projection layer so the same program is **visible as a
+cell-graph**.
 
-### A real-time multi-user drawing application built with Java, JavaFX, and TCP Sockets
+## The three doors — pick the one that fits you
 
-<br>
+- **📖 [UPSTREAM.md](docs/UPSTREAM.md)** — The original Java desktop
+  app, faithfully documented. If you want the unmodified project, start
+  here.
+- **⚙️ [QUILT.md](docs/QUILT.md)** — The cell-graph projection layer.
+  Engineering English. Shows how the TCP server + JavaFX client become
+  cells with typed links.
+- **🚢 [PLAIN_LANGUAGE.md](docs/PLAIN_LANGUAGE.md)** — For captains,
+  mechanics, deckhands, working people. Two-minute read. Plain language.
 
-[![Java](https://img.shields.io/badge/Java-25-orange?style=for-the-badge\&logo=openjdk)](https://www.java.com/)
-[![JavaFX](https://img.shields.io/badge/JavaFX-25-4285F4?style=for-the-badge)](https://openjfx.io/)
-[![Maven](https://img.shields.io/badge/Maven-Build-C71A36?style=for-the-badge\&logo=apachemaven)](https://maven.apache.org/)
-[![TCP](https://img.shields.io/badge/Networking-TCP%20Sockets-success?style=for-the-badge)](#-architecture)
+## Status
 
-</div>
+| Area | State |
+|---|---|
+| Upstream code | ✅ Preserved, unmodified |
+| Cell-graph projection | ✅ Documented (3 server cells + N client cells) |
+| Python reference port | ✅ Example in `QUILT.md` |
+| WebSocket / Cloudflare Worker port | 🔮 Future |
+| WebRTC (peer-to-peer) port | 🔮 Future |
+| Vectorize cross-pollination | 🔮 Future — needs Cloudflare DNS clear |
 
----
-
-## 📸 Preview
-
-<table>
-<tr>
-
-<td width="50%" align="center">
-
-### 🔐 Client Login
-
-<img src="src/main/login-1.png" width="100%">
-
-</td>
-
-<td width="50%" align="center">
-
-### 👥 Second Client
-
-<img src="src/main/login-2.png" width="100%">
-
-</td>
-
-</tr>
-</table>
-
-<br>
-
-<div align="center">
-
-### 🎨 Collaborative Workspace
-
-<img src="src/main/collaborative-workspace.png" width="90%">
-
-</div>
-
----
-
-## ✨ Features
-
-* 🎨 **Real-time collaborative drawing**
-* 👥 **Multiple simultaneous users**
-* 🔐 **Registration & authentication**
-* 🌐 **TCP socket communication**
-* 🔄 **Real-time drawing synchronization**
-* 📍 **Live pointer updates**
-* 💬 **Real-time chat**
-* 👤 **Live connected-user list**
-* 🖌️ **Multiple drawing tools**
-* 🎨 **Multiple colors and brush thicknesses**
-* 📝 **Text annotations**
-* 🧹 **Eraser support**
-* 🖥️ **JavaFX desktop interface**
-
----
-
-# 🏗️ Architecture
-
-The application follows a **client/server architecture**.
-
-```text
-                         ┌─────────────────────┐
-                         │      CLIENT 1       │
-                         │      JavaFX UI      │
-                         └──────────┬──────────┘
-                                    │
-                                    │ TCP Socket
-                                    ▼
-                    ┌─────────────────────────────┐
-                    │           SERVER            │
-                    │                             │
-                    │   Authentication            │
-                    │   Connected Users           │
-                    │   Drawing State             │
-                    │   Message Broadcasting      │
-                    └──────────────┬──────────────┘
-                                   │
-                         ┌─────────┴─────────┐
-                         │                   │
-                        TCP                 TCP
-                         │                   │
-                         ▼                   ▼
-                ┌────────────────┐   ┌────────────────┐
-                │    CLIENT 2    │   │    CLIENT 3    │
-                │    JavaFX UI   │   │    JavaFX UI   │
-                └────────────────┘   └────────────────┘
-```
-
-The server maintains the shared drawing state and broadcasts updates to connected clients.
-
-The server currently uses port **5050** by default and creates a dedicated `ClientHandler` thread for each incoming socket connection.
-
----
-
-# 🔄 Real-Time Synchronization
-
-When a user performs a drawing operation:
-
-```text
-       User Action
-            │
-            ▼
-      JavaFX Client
-            │
-            │ DrawingOperation
-            ▼
-       TCP Socket
-            │
-            ▼
-          Server
-            │
-       ┌────┴─────┐
-       │          │
- Update State   Broadcast
-       │          │
-       │      ┌───┼───┐
-       │      ▼   ▼   ▼
-       └──── Client Client Client
-```
-
-Drawing operations are stored by the server and broadcast to connected clients. When a new user authenticates, the server sends the current drawing state so the client can reconstruct the existing workspace.
-
----
-
-# 🎨 Drawing Tools
-
-The drawing workspace provides several tools:
-
-```text
-┌─────────────────────────────────────────┐
-│                 TOOLS                   │
-├─────────────────────────────────────────┤
-│                                         │
-│  ✏️ Pen        ➜ Arrow                  │
-│  ○ Circle      ▢ Rectangle              │
-│  📍 Pin        T Text                   │
-│  🧹 Eraser                              │
-│                                         │
-└─────────────────────────────────────────┘
-```
-
-Users can also select:
-
-* 🎨 Drawing color
-* 📏 Line thickness
-* 🔤 Text size
-
-The JavaFX controller implements pen, arrow, circle, rectangle, pin, text, and eraser interactions, along with a grid-based drawing workspace.
-
----
-
-# 💬 Communication
-
-The application uses a shared message model between the client and server.
-
-```text
-                    Message
-                       │
-        ┌──────────────┼──────────────┐
-        │              │              │
-        ▼              ▼              ▼
-   Authentication   Drawing        Real-Time
-                    Operations      Updates
-                                       │
-                              ┌────────┴────────┐
-                              ▼                 ▼
-                           Chat             Pointer
-```
-
-The server handles authentication, drawing additions/removals, chat messages, pointer updates, and user-list synchronization.
-
----
-
-# 🔐 Authentication
-
-```text
-              ┌──────────────┐
-              │    Client    │
-              └──────┬───────┘
-                     │
-                     │ Auth Request
-                     ▼
-              ┌──────────────┐
-              │    Server    │
-              └──────┬───────┘
-                     │
-              ┌──────┴──────┐
-              │             │
-           Success        Failure
-              │             │
-              ▼             ▼
-        ┌──────────┐     Error
-        │ Workspace│
-        └──────────┘
-```
-
-The server supports both registration and login, prevents duplicate active logins, and sends the initial workspace state after successful authentication.
-
----
-
-# 🧩 Project Structure
-
-```text
-collaborative-realtime-drawing-system/
-│
-├── pom.xml
-│
-└── src/
-    └── main/
-        │
-        ├── java/
-        │   └── opsmap/
-        │       │
-        │       ├── client/
-        │       │   ├── ClientConnection.java
-        │       │   ├── LoginController.java
-        │       │   ├── OperationsController.java
-        │       │   └── OpsMapClientApp.java
-        │       │
-        │       ├── server/
-        │       │   ├── ClientHandler.java
-        │       │   └── OpsMapServer.java
-        │       │
-        │       └── shared/
-        │           ├── AuthRequest.java
-        │           ├── AuthResponse.java
-        │           ├── ChatMessage.java
-        │           ├── ColorData.java
-        │           ├── DrawingOperation.java
-        │           ├── MapState.java
-        │           ├── Message.java
-        │           ├── MessageType.java
-        │           ├── PointData.java
-        │           ├── PointerUpdate.java
-        │           ├── ToolType.java
-        │           └── UserList.java
-        │
-        └── resources/
-            └── fxml/
-                ├── login.fxml
-                └── operations.fxml
-```
-
-The repository separates the application into `client`, `server`, and `shared` packages.
-
----
-
-# 🛠️ Technology Stack
-
-| Technology            | Purpose                         |
-| --------------------- | ------------------------------- |
-| ☕ **Java 25**         | Core programming language       |
-| 🎨 **JavaFX 25**      | Desktop graphical interface     |
-| 🌐 **TCP Sockets**    | Client/server networking        |
-| 📦 **Maven**          | Build and dependency management |
-| 🧩 **FXML**           | JavaFX UI layouts               |
-| 🧵 **Java Threads**   | Handling concurrent clients     |
-| 📡 **Object Streams** | Message serialization           |
-
-The Maven configuration targets Java 25 and JavaFX 25 and uses the JavaFX Controls and FXML modules.
-
----
-
-# 🚀 Getting Started
-
-## 1. Clone
+## Quick start (the original server + client)
 
 ```bash
-git clone https://github.com/mominyar/collaborative-realtime-drawing-system.git
-
-cd collaborative-realtime-drawing-system
-```
-
-## 2. Check Java
-
-```bash
+# Verify Java 25 and Maven
 java --version
-```
-
-The project targets **Java 25**.
-
-## 3. Check Maven
-
-```bash
 mvn --version
-```
 
-## 4. Build
-
-```bash
+# Build
 mvn clean package
-```
 
----
+# Terminal 1: server
+java -cp target/classes opsmap.server.OpsMapServer 5050
 
-# ▶️ Running the Application
-
-## Start the Server
-
-Run:
-
-```text
-opsmap.server.OpsMapServer
-```
-
-The default port is:
-
-```text
-5050
-```
-
-A custom port can also be supplied as a command-line argument.
-
-```bash
-java ... opsmap.server.OpsMapServer 5051
-```
-
-The server continuously accepts incoming connections and creates a separate handler thread for each client.
-
----
-
-## Start the Client
-
-The JavaFX application entry point is:
-
-```text
-opsmap.client.OpsMapClientApp
-```
-
-Or use Maven:
-
-```bash
+# Terminal 2, 3, 4: clients (one per user)
 mvn javafx:run
+# JavaFX main class: opsmap.client.OpsMapClientApp
 ```
 
-The Maven configuration already specifies `opsmap.client.OpsMapClientApp` as the JavaFX main class.
+Open multiple client windows, register/login with different names,
+draw on one — see strokes appear on all.
 
----
+## The cell-graph (canonical)
 
-# 👥 Multi-Client Testing
+**Server (3 cells):** `server_root → broadcast_hub → handler_X` (one per client)
 
-Start **one server**, then launch multiple client instances.
+**Client (4 cells):** `login → workspace → canvas → stroke_n`
 
-```text
-                         SERVER :5050
-                              │
-               ┌──────────────┼──────────────┐
-               │              │              │
-               ▼              ▼              ▼
-           Client 1       Client 2       Client 3
-             Alice           Bob          Charlie
-               │              │              │
-               └──────────────┼──────────────┘
-                              │
-                       Shared Workspace
-```
+Every TCP connection is a `BIND`. Every stroke is an `EFFECT` on the
+canvas cell, broadcast to every handler. Every render is a `VIEW`.
+The witness chain IS the canvas event log.
 
-### Example
+## What we kept vs added
 
-1. Start the server.
-2. Launch Client 1.
-3. Launch Client 2.
-4. Register/login with different users.
-5. Draw on Client 1.
-6. Observe the drawing appear on Client 2.
-7. Test chat and pointer synchronization.
+**Kept** (from upstream):
+- All `src/` code (`opsmap.server.OpsMapServer`, `opsmap.client.OpsMapClientApp`,
+  screenshots)
+- `pom.xml`, Maven config
+- The original `LICENSE`
 
----
+**Added** (the Quilt layer):
+- `docs/UPSTREAM.md` — original-repo-faithful documentation
+- `docs/QUILT.md` — the cell-graph projection
+- `docs/PLAIN_LANGUAGE.md` — working-people version
+- `LICENSE-QUILT` — MIT, for the Quilt layer
+- This README (rewritten as a landing-page dispatcher)
 
-# 🧠 What This Project Demonstrates
+**Nothing in the upstream was renamed or moved.**
 
-This project provides practical experience with:
+## See also
 
-* Object-Oriented Programming
-* JavaFX desktop development
-* FXML
-* TCP/IP networking
-* Socket programming
-* Multithreading
-* Client/server architecture
-* Real-time state synchronization
-* Authentication
-* Serialization
-* Event-driven programming
-* Shared application state
-
----
-<div align="center">
-
-# 🎨 Draw Together. Build Together.
-
-#### Author:
-
-### 👨‍💻 Mujeeb Mominyar
-
-Computer Engineering
-
-Amirkabir University of Technology
-
-<br>
-
-<a href="https://github.com/mominyar">
-
-<img src="https://img.shields.io/badge/GitHub-mominyar-181717?style=for-the-badge&logo=github">
-
-</a>
-
-<br><br>
-
-<a href="https://github.com/mominyar">
-View my GitHub profile →
-</a>
-
-</div>
+- [SuperInstance/quilt-cell-router](https://github.com/SuperInstance/quilt-cell-router) —
+  A2A bottle-cell routing; the broadcast hub IS a router
+- [SuperInstance/quilt-cordis](https://github.com/SuperInstance/quilt-cordis) —
+  the cell-plugin bridge that makes the Java components addressable
+- [SuperInstance/conservation-law-rs](https://github.com/SuperInstance/conservation-law-rs) —
+  conservation laws for draw events (every stroke is conserved)
+- The original: [mominyar/collaborative-realtime-drawing-system](https://github.com/mominyar/collaborative-realtime-drawing-system)
